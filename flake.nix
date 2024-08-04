@@ -77,6 +77,12 @@
 			cp ${init} $out
 			chmod +x $out
 			'';
+			# _very_ hacky, my nix-fu is definitely not great, figure out a better way
+			iptablesPath = pkgs.runCommand "iptablesPath" {} ''
+			mkdir -p $out/app
+			echo "${(pkgs.lib.lists.findFirst (x: pkgs.lib.strings.hasInfix "iptable" x) "/nowhere" (pkgs.lib.strings.splitString ":" pkgs.docker.moby.extraPath))}/" > $out/app/iptablesPath.txt
+			cat $out/app/iptablesPath.txt
+			'';
 			packages.${system}.default = nitro.buildEif {
 				name = "enclave";
 				arch = eifArch;
@@ -91,7 +97,7 @@
 				env = "";
 				copyToRoot = pkgs.buildEnv {
 					name = "image-root";
-					paths = [ self.app pkgs.busybox pkgs.nettools pkgs.iproute2 pkgs.iptables-legacy pkgs.docker pkgs.cacert ];
+					paths = [ self.app self.iptablesPath pkgs.busybox pkgs.nettools pkgs.iproute2 pkgs.iptables-legacy pkgs.docker pkgs.cacert ];
 					pathsToLink = [ "/bin" "/app" "/etc" ];
 				};
 			};
